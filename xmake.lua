@@ -47,6 +47,7 @@ target("tests")
     -- Include source files needed by tests (excluding main.cpp)
     add_files("src/platform/platform.cpp")
     add_files("src/game/game_loop.cpp")
+    add_files("src/physics/ball_physics.cpp")
 
     if is_plat("windows") then
         add_syslinks("winmm")
