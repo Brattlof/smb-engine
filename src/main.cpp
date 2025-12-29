@@ -132,8 +132,7 @@ static void onPhysicsUpdate(double dt) {
     // Simple boundary: reset if ball goes too far
     const float BOUNDARY = 15.0f;
     if (std::fabs(g_ballState.position.x) > BOUNDARY ||
-        std::fabs(g_ballState.position.z) > BOUNDARY ||
-        g_ballState.position.y < -5.0f) {
+        std::fabs(g_ballState.position.z) > BOUNDARY || g_ballState.position.y < -5.0f) {
         Logger::debug("physics", "Ball out of bounds, resetting");
         g_ballState.reset();
         g_worldTilt.reset();
@@ -242,12 +241,10 @@ static void onRender(double alpha) {
         g_renderer->drawText(buffer, 10, 150, 14, Color::white());
 
         std::snprintf(buffer, sizeof(buffer), "Tilt: X=%.2f deg  Z=%.2f deg",
-                      g_worldTilt.tiltX * 180.0f / 3.14159f,
-                      g_worldTilt.tiltZ * 180.0f / 3.14159f);
+                      g_worldTilt.tiltX * 180.0f / 3.14159f, g_worldTilt.tiltZ * 180.0f / 3.14159f);
         g_renderer->drawText(buffer, 10, 170, 14, Color::white());
 
-        std::snprintf(buffer, sizeof(buffer), "Physics Tick: %llu  %s",
-                      g_ballState.tickCount,
+        std::snprintf(buffer, sizeof(buffer), "Physics Tick: %llu  %s", g_ballState.tickCount,
                       g_ballState.isGrounded() ? "[GROUNDED]" : "[AIRBORNE]");
         g_renderer->drawText(buffer, 10, 190, 14, Color::white());
 

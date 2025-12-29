@@ -44,7 +44,7 @@ target("tests")
     add_includedirs("tests")
     add_includedirs("src")
 
-    -- Include source files needed by tests (excluding main.cpp)
+    -- Include source files needed by tests (excluding main.cpp and raylib-dependent code)
     add_files("src/platform/platform.cpp")
     add_files("src/game/game_loop.cpp")
     add_files("src/physics/ball_physics.cpp")
