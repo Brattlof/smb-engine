@@ -1,0 +1,114 @@
+# SMB Physics Engine - Code Style Configuration
+# Based on Google style with adjustments for game development readability
+
+Language: Cpp
+BasedOnStyle: Google
+
+# Indentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+IndentCaseLabels: false
+IndentCaseBlocks: false
+NamespaceIndentation: None
+AccessModifierOffset: -4
+
+# Line length - 100 is reasonable for modern monitors
+ColumnLimit: 100
+
+# Braces - same line for consistency
+BreakBeforeBraces: Attach
+Cpp11BracedListStyle: true
+
+# Alignment
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignOperands: true
+AlignTrailingComments: true
+AlignEscapedNewlines: Right
+
+# Pointers and references - stick to type
+PointerAlignment: Left
+ReferenceAlignment: Left
+DerivePointerAlignment: false
+
+# Include sorting
+IncludeBlocks: Regroup
+SortIncludes: true
+IncludeCategories:
+  # Project headers first
+  - Regex: '^"(platform|util|game|rendering|input|camera|audio|physics)/'
+    Priority: 1
+  # Then external libraries
+  - Regex: '^<raylib'
+    Priority: 2
+  # Then standard library
+  - Regex: '^<'
+    Priority: 3
+  # Catch-all
+  - Regex: '.*'
+    Priority: 4
+
+# Spacing
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 2
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+
+# Line breaks
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Inline
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: true
+BinPackParameters: true
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+BreakInheritanceList: BeforeColon
+BreakStringLiterals: true
+
+# Constructor initializer lists
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 4
+
+# Function declarations
+AllowAllArgumentsOnNextLine: true
+
+# Penalties - guide the formatter's decisions
+PenaltyBreakAssignment: 2
+PenaltyBreakBeforeFirstCallParameter: 1
+PenaltyBreakComment: 300
+PenaltyBreakFirstLessLess: 120
+PenaltyBreakString: 1000
+PenaltyExcessCharacter: 1000000
+PenaltyReturnTypeOnItsOwnLine: 200
+
+# Miscellaneous
+CompactNamespaces: false
+FixNamespaceComments: true
+MaxEmptyLinesToKeep: 2
+ReflowComments: true
+SortUsingDeclarations: true
+
+# C++ specific
+Standard: c++17

@@ -1,4 +1,4 @@
-set_project("smb-physics")
+set_project("smb-engine")
 set_version("0.1.0")
 
 set_languages("c++17")
@@ -19,7 +19,8 @@ end
 
 add_requires("raylib 5.5")
 
-target("smb-physics")
+-- Main engine executable
+target("smb-engine")
     set_kind("binary")
     add_files("src/**.cpp")
     add_includedirs("src")
@@ -33,8 +34,22 @@ target("smb-physics")
         add_frameworks("CoreVideo", "IOKit", "Cocoa", "GLUT", "OpenGL")
     end
 
+-- Unit tests
 target("tests")
     set_kind("binary")
     set_default(false)
+
+    -- Test files
     add_files("tests/**.cpp")
+    add_includedirs("tests")
     add_includedirs("src")
+
+    -- Include source files needed by tests (excluding main.cpp)
+    add_files("src/platform/platform.cpp")
+    add_files("src/game/game_loop.cpp")
+
+    if is_plat("windows") then
+        add_syslinks("winmm")
+    elseif is_plat("linux") then
+        add_syslinks("pthread", "dl", "m")
+    end

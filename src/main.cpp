@@ -1,23 +1,186 @@
-#include "raylib.h"
+#include "audio/audio_player.hpp"
+#include "game/game_loop.hpp"
+#include "input/raylib_input_reader.hpp"
+#include "platform/platform.hpp"
+#include "rendering/debug_draw.hpp"
+#include "rendering/raylib_renderer.hpp"
+#include "util/logger.hpp"
 
-// Entry point - just a skeleton for now.
-// Real game loop structure TBD once we nail down the physics timestep.
-int main()
-{
-    const int screenWidth = 1280;
-    const int screenHeight = 720;
+#include <cstdio>
 
-    InitWindow(screenWidth, screenHeight, "SMB Physics");
-    SetTargetFPS(60);
+// =============================================================================
+// SMB Physics Engine - Entry Point
+// =============================================================================
+// This sets up the game infrastructure and runs the main loop.
+// Physics timestep is fixed at 60Hz per SMB original.
+// =============================================================================
 
-    while (!WindowShouldClose())
-    {
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-        DrawText("SMB Physics - Work in Progress", 10, 10, 20, DARKGRAY);
-        EndDrawing();
+// Forward declarations for game callbacks
+static void onPhysicsUpdate(double dt);
+static void onRender(double alpha);
+
+// Global systems - yeah, globals are gross, but this is the main entry point
+// and these are true singletons. Fight me.
+static smb::RaylibRenderer* g_renderer = nullptr;
+static smb::RaylibInputReader* g_inputReader = nullptr;
+static smb::NullAudioPlayer* g_audioPlayer = nullptr;
+static smb::GameLoop* g_gameLoop = nullptr;
+static smb::DebugDraw* g_debugDraw = nullptr;
+
+int main() {
+    using namespace smb;
+
+    // Initialize logger first
+    Logger::setLevel(LogLevel::DEBUG);
+    Logger::info("main", "SMB Physics Engine starting up...");
+    Logger::info("main", "Platform: %s", platform::getPlatformName());
+
+    // Create systems
+    g_renderer = new RaylibRenderer();
+    g_inputReader = new RaylibInputReader();
+    g_audioPlayer = new NullAudioPlayer();
+    g_gameLoop = new GameLoop();
+
+    // Initialize renderer (creates window)
+    if (!g_renderer->initialize(1280, 720, "SMB Physics Engine")) {
+        Logger::fatal("main", "Failed to initialize renderer");
+        return 1;
     }
 
-    CloseWindow();
+    // Create debug drawer after renderer
+    g_debugDraw = new DebugDraw(g_renderer);
+
+    // Initialize other systems
+    g_audioPlayer->initialize();
+    g_gameLoop->initialize();
+
+    // Set up callbacks
+    g_gameLoop->setUpdateCallback(onPhysicsUpdate);
+    g_gameLoop->setRenderCallback(onRender);
+
+    Logger::info("main", "All systems initialized. Entering main loop...");
+
+    // Main loop
+    while (g_gameLoop->tick()) {
+        // Poll input
+        g_inputReader->poll();
+
+        // Check for close request
+        if (g_inputReader->isCloseRequested()) {
+            g_gameLoop->requestExit();
+        }
+
+        // Toggle debug display
+        if (g_inputReader->getState().debugTogglePressed) {
+            g_debugDraw->setEnabled(!g_debugDraw->isEnabled());
+            Logger::debug("main", "Debug display: %s", g_debugDraw->isEnabled() ? "ON" : "OFF");
+        }
+    }
+
+    Logger::info("main", "Main loop exited. Shutting down...");
+
+    // Cleanup in reverse order
+    g_audioPlayer->shutdown();
+    g_renderer->shutdown();
+
+    delete g_debugDraw;
+    delete g_gameLoop;
+    delete g_audioPlayer;
+    delete g_inputReader;
+    delete g_renderer;
+
+    Logger::info("main", "Shutdown complete. Goodbye!");
     return 0;
+}
+
+// Called at fixed 60Hz for physics
+static void onPhysicsUpdate(double dt) {
+    (void)dt;
+    // Physics updates happen here - gravity, friction, velocity integration
+}
+
+// Called every frame for rendering
+static void onRender(double alpha) {
+    using namespace smb;
+
+    (void)alpha;  // Will use for interpolation later
+
+    g_renderer->beginFrame();
+    g_renderer->clear(Color::rgb(40, 44, 52));  // Dark background
+
+    // Set up camera
+    CameraData camera;
+    camera.position = Vec3(0.0f, 10.0f, 15.0f);
+    camera.target = Vec3(0.0f, 0.0f, 0.0f);
+    camera.up = Vec3(0.0f, 1.0f, 0.0f);
+    camera.fovY = 45.0f;
+
+    g_renderer->begin3D(camera);
+
+    // Draw a ground plane
+    g_renderer->drawPlane(Vec3(0, 0, 0), 20.0f, 20.0f, Color::rgb(60, 60, 70));
+
+    // Draw a test sphere where the ball will be
+    g_renderer->drawSphere(Vec3(0.0f, 0.5f, 0.0f), 0.5f, Color::red());
+
+    // Debug drawing (in 3D context)
+    g_debugDraw->begin3D(camera);
+
+    // Draw coordinate axes at origin using debug system
+    g_debugDraw->axes(Vec3(0, 0, 0), 3.0f, DebugCategory::WORLD);
+
+    // Draw wireframe around ball
+    g_debugDraw->sphere(Vec3(0.0f, 0.5f, 0.0f), 0.52f, Color::white(), DebugCategory::PHYSICS);
+
+    // Show a sample velocity vector (pointing where the ball would go)
+    const auto& input = g_inputReader->getState();
+    if (input.hasTiltInput()) {
+        Vec3 velocityDir = {input.tiltX * 2.0f, 0, -input.tiltY * 2.0f};
+        g_debugDraw->arrow(Vec3(0, 0.5f, 0), Vec3(velocityDir.x, 0.5f, velocityDir.z),
+                           Color::yellow(), DebugCategory::PHYSICS);
+    }
+
+    // Draw grid using debug system
+    g_debugDraw->groundGrid(1.0f, 20, Color::gray(), DebugCategory::WORLD);
+
+    // Render all debug 3D stuff
+    g_debugDraw->render3D();
+
+    g_debugDraw->end3D();
+
+    g_renderer->end3D();
+
+    // 2D overlay
+    g_renderer->drawText("SMB Physics Engine", 10, 10, 20, Color::white());
+
+    if (g_debugDraw->isEnabled()) {
+        const auto& stats = g_gameLoop->getStats();
+
+        char buffer[256];
+
+        std::snprintf(buffer, sizeof(buffer), "FPS: %.1f", stats.fps);
+        g_renderer->drawText(buffer, 10, 40, 16, Color::green());
+
+        std::snprintf(buffer, sizeof(buffer), "Physics: %.1f Hz (%d ticks/frame)", stats.physicsHz,
+                      stats.physicsTicksThisFrame);
+        g_renderer->drawText(buffer, 10, 60, 16, Color::green());
+
+        std::snprintf(buffer, sizeof(buffer), "Frame: %llu  Ticks: %llu", stats.frameCount,
+                      stats.physicsTickCount);
+        g_renderer->drawText(buffer, 10, 80, 16, Color::gray());
+
+        std::snprintf(buffer, sizeof(buffer), "Input: X=%.2f Y=%.2f", input.tiltX, input.tiltY);
+        g_renderer->drawText(buffer, 10, 100, 16, Color::yellow());
+
+        g_renderer->drawText("[F1] Toggle debug | [WASD/Arrows] Tilt input", 10,
+                             g_renderer->getScreenHeight() - 30, 14, Color::gray());
+
+        // Render debug 2D text
+        g_debugDraw->render2D();
+    }
+
+    // Clear debug draw queue for next frame
+    g_debugDraw->clear();
+
+    g_renderer->endFrame();
 }
