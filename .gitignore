@@ -1,0 +1,32 @@
+# Build output
+build/
+.xmake/
+
+# IDE junk
+.vs/
+.vscode/
+*.user
+*.suo
+.idea/
+*.swp
+*.swo
+*~
+
+# OS garbage
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Compiled objects
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.pdb
+
+# Package manager cache
+.cache/
